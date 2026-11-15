@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<style>body{margin:0}img{max-width:100%}</style>
+<title>Azeotropic Distillation Simplified</title>
+<meta content="cover" name="claude:viewport-fit-sides"/>
+<meta content="An interactive, plain-language tour of an Aspen Plus V15 project that turns a 50/50 ethanol–water mixture into 99.95% ethanol using cyclohexane." name="description"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<style>
+/* Layout: a single reading column (~68ch) for the story, widening to 1120px for the plant tour, data and gallery. Stream colours carry meaning everywhere: green = ethanol, blue = water, amber = cyclohexane. */
+:root{
+  --paper:#f2f5f4; --surface:#ffffff; --sunk:#e7eeeb; --ink:#13201c; --muted:#53625d; --line:#d3ddd9;
+  --eth:#1f7a3a; --water:#1d68ad; --cyc:#b86200; --tern:#7240c8; --rec:#ad2459; --feed:#4c5964;
+  --eth-soft:#dcefe2; --water-soft:#dbe8f5; --cyc-soft:#f8e7d0; --rec-soft:#f6dde7; --tern-soft:#e9e0f8;
+  --accent:#b86200; --focus:#1d68ad; --shadow:0 1px 2px rgb(19 32 28 / .06),0 6px 24px rgb(19 32 28 / .06);
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0e1513; --surface:#151f1c; --sunk:#1b2723; --ink:#e4ece9; --muted:#9db0aa; --line:#2b3934;
+  --eth:#55c477; --water:#62a9ec; --cyc:#f0a03a; --tern:#ac86f2; --rec:#ee6f9f; --feed:#a3afb8;
+  --eth-soft:#173826; --water-soft:#142c45; --cyc-soft:#3a2810; --rec-soft:#3c1626; --tern-soft:#291d44;
+  --accent:#f0a03a; --focus:#62a9ec; --shadow:0 1px 2px rgb(0 0 0 / .3),0 8px 28px rgb(0 0 0 / .25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0e1513; --surface:#151f1c; --sunk:#1b2723; --ink:#e4ece9; --muted:#9db0aa; --line:#2b3934;
+  --eth:#55c477; --water:#62a9ec; --cyc:#f0a03a; --tern:#ac86f2; --rec:#ee6f9f; --feed:#a3afb8;
+  --eth-soft:#173826; --water-soft:#142c45; --cyc-soft:#3a2810; --rec-soft:#3c1626; --tern-soft:#291d44;
+  --accent:#f0a03a; --focus:#62a9ec; --shadow:0 1px 2px rgb(0 0 0 / .3),0 8px 28px rgb(0 0 0 / .25); color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+a{color:var(--water);text-underline-offset:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+h1,h2,h3{font-family:var(--display);font-stretch:88%;line-height:1.08;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:clamp(1.8rem,3.6vw,2.6rem);font-weight:750}
+h3{font-size:1.22rem;font-weight:700;font-stretch:95%}
+p{margin:0}
+.mono,.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.read{max-width:44rem}
+.stack{display:grid;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.cite{color:var(--muted);font-size:.88em;white-space:nowrap}
+.e{color:var(--eth);font-weight:600}.w{color:var(--water);font-weight:600}.c{color:var(--cyc);font-weight:600}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:18px;padding-block:10px}
+.brand{font-family:var(--display);font-weight:800;font-stretch:80%;font-size:1.05rem;white-space:nowrap;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:8px}
+.brand i{display:inline-flex;gap:2px}
+.brand i b{width:6px;height:14px;border-radius:2px;display:block}
+nav.toc{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0;margin-left:auto}
+nav.toc::-webkit-scrollbar{display:none}
+nav.toc a{font-size:.84rem;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:999px;white-space:nowrap}
+nav.toc a:hover,nav.toc a.on{color:var(--ink);background:var(--sunk)}
+
+/* hero */
+.hero{padding-block:56px 40px}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:44px;align-items:center}
+.hero h1{font-size:clamp(2.3rem,5.4vw,4rem);font-weight:800;font-stretch:82%;margin-top:14px}
+.hero h1 em{font-style:normal;color:var(--eth)}
+.lede{font-size:1.15rem;color:var(--muted);margin-top:18px;max-width:36rem}
+.byline{margin-top:22px;font-size:.92rem;color:var(--muted)}
+.byline strong{color:var(--ink)}
+.tubes{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 20px 16px;box-shadow:var(--shadow)}
+.tubes-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;height:230px}
+.tube{display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:8px;height:100%}
+.tube .val{font-family:var(--mono);font-weight:500;font-size:1.05rem}
+.glass{width:46px;height:100%;border:2px solid var(--muted);border-top:none;border-radius:0 0 22px 22px;position:relative;overflow:hidden;background:var(--water-soft)}
+.glass::before{content:"";position:absolute;left:0;right:0;bottom:0;height:var(--h);background:linear-gradient(var(--eth),color-mix(in srgb,var(--eth) 75%,var(--surface)));animation:fill 1.6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes fill{from{height:calc(var(--h) * .55)}}
+.tube small{font-size:.78rem;color:var(--muted);text-align:center;line-height:1.3}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:14px;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.hero .wrap.statwrap{display:block}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:40px}
+.stat{background:var(--surface);padding:18px 18px 16px}
+.stat .big{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:2rem;line-height:1}
+.stat .lbl{font-size:.86rem;color:var(--muted);margin-top:6px;line-height:1.35}
+
+/* sections */
+section.ch{padding-block:64px;border-top:1px solid var(--line)}
+section.ch.alt{background:var(--surface)}
+.ch-head{display:grid;gap:12px;margin-bottom:28px;max-width:46rem}
+.ch-head .eyebrow b{color:var(--accent);font-weight:500}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+section.alt .card{background:var(--paper)}
+.uses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:28px}
+.uses .card{display:grid;gap:8px;align-content:start}
+.uses .card .k{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.note{font-size:.9rem;color:var(--muted)}
+.callout{border-left:4px solid var(--accent);background:var(--cyc-soft);padding:14px 16px;border-radius:0 10px 10px 0}
+.callout.g{border-color:var(--eth);background:var(--eth-soft)}
+
+figure{margin:0}
+figure img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--line)}
+figcaption{font-size:.86rem;color:var(--muted);margin-top:10px;line-height:1.45}
+.paperframe{background:#fff;border-radius:12px;padding:10px;border:1px solid var(--line)}
+.paperframe img{border:none}
+
+/* VLE */
+.vle{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:center}
+.vle svg{width:100%;height:auto;max-width:440px;display:block;margin:0 auto}
+.vle .axis{stroke:var(--muted);stroke-width:1}
+.vle .grid{stroke:var(--line);stroke-width:1}
+.vle .diag{stroke:var(--muted);stroke-dasharray:5 5;stroke-width:1.4;fill:none}
+.vle .curve{stroke:var(--eth);stroke-width:3;fill:none}
+.vle .wall{stroke:var(--rec);stroke-width:2;stroke-dasharray:6 4}
+.vle text{fill:var(--muted);font-family:var(--mono);font-size:12px}
+.vle .pt{fill:var(--accent);stroke:var(--surface);stroke-width:3}
+.vle .gap{stroke:var(--accent);stroke-width:3}
+.meters{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+.meter{display:grid;gap:8px;justify-items:center}
+.meter .bar{width:100%;height:150px;border-radius:10px;background:var(--water-soft);position:relative;overflow:hidden;border:1px solid var(--line)}
+.meter .bar i{position:absolute;left:0;right:0;bottom:0;background:var(--eth);transition:height .25s}
+.meter .bar span{position:absolute;inset:auto 0 8px;text-align:center;font-family:var(--mono);font-weight:500;color:#fff;text-shadow:0 1px 2px rgb(0 0 0 / .4)}
+.meter label{font-size:.85rem;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);margin-top:6px}
+.verdict{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--sunk);font-weight:500;min-height:3.2em}
+.verdict.stuck{background:var(--rec-soft);color:var(--rec)}
+
+/* ladder */
+.ladder{display:grid;gap:8px}
+.rung{display:grid;grid-template-columns:5.2rem minmax(0,1fr);gap:14px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;color:inherit;cursor:pointer}
+section.alt .rung{background:var(--paper)}
+.rung:hover{border-color:var(--muted)}
+.rung[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.rung .t{font-family:var(--mono);font-weight:500;font-size:1.05rem}
+.rung .n{font-weight:600;font-size:.98rem}
+.rung .bar3{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;background:var(--sunk)}
+.rung .bar3 i{display:block;height:100%}
+.rung.top .t{color:var(--accent)}
+.ladder-detail{min-height:8em}
+
+/* plant tour */
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{font:inherit;font-size:.88rem;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tour{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:18px;align-items:start}
+.pfd-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+.pfd-box svg{display:block;min-width:680px;width:100%;height:auto}
+#pfd .line{fill:none;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+#pfd .flow{fill:none;stroke-width:3;stroke:var(--surface);stroke-dasharray:3 15;opacity:.0;animation:dash 1.1s linear infinite}
+#pfd.animate .flow{opacity:.9}
+@keyframes dash{to{stroke-dashoffset:-18}}
+#pfd .hit{fill:none;stroke:transparent;stroke-width:18;cursor:pointer}
+#pfd .slabel{font-family:var(--mono);font-size:12.5px;font-weight:500;paint-order:stroke;stroke:var(--surface);stroke-width:5px;cursor:pointer}
+#pfd .st{transition:opacity .2s}
+#pfd .st.dim{opacity:.13}
+#pfd .st.sel .line{stroke-width:5.5}
+#pfd .st-feed .line{stroke:var(--feed)}#pfd .st-feed .slabel,#pfd .mk-feed,#pfd .term-feed{fill:var(--feed)}
+#pfd .st-water .line{stroke:var(--water)}#pfd .st-water .slabel,#pfd .mk-water,#pfd .term-water{fill:var(--water)}
+#pfd .st-eth .line{stroke:var(--eth)}#pfd .st-eth .slabel,#pfd .mk-eth,#pfd .term-eth{fill:var(--eth)}
+#pfd .st-cyc .line{stroke:var(--cyc)}#pfd .st-cyc .slabel,#pfd .mk-cyc,#pfd .term-cyc{fill:var(--cyc)}
+#pfd .st-tern .line{stroke:var(--tern)}#pfd .st-tern .slabel,#pfd .mk-tern{fill:var(--tern)}
+#pfd .st-rec .line{stroke:var(--rec)}#pfd .st-rec .slabel,#pfd .mk-rec{fill:var(--rec)}
+#pfd .term{font-family:var(--mono);font-size:11.5px;font-weight:500}
+#pfd .blk{cursor:pointer}
+#pfd .blk .body{fill:var(--sunk);stroke:var(--ink);stroke-width:1.8;transition:fill .15s}
+#pfd .blk:hover .body,#pfd .blk.sel .body{fill:var(--cyc-soft)}
+#pfd .blk.sel .body{stroke:var(--accent);stroke-width:3}
+#pfd .tray{stroke:var(--muted);stroke-width:1.4}
+#pfd .tag{fill:var(--surface);stroke:var(--line)}
+#pfd .bname{font-family:var(--display);font-stretch:80%;font-weight:750;font-size:13.5px;fill:var(--ink)}
+#pfd .bsub{font-size:10.5px;fill:var(--muted)}
+#pfd .layer-top{fill:var(--cyc-soft)}
+#pfd .layer-bot{fill:var(--water-soft)}
+#pfd .calc{cursor:pointer}
+#pfd .calc rect{fill:none;stroke:var(--muted);stroke-dasharray:4 3;stroke-width:1.4}
+#pfd .calc path{stroke:var(--muted);stroke-dasharray:3 3;fill:none}
+#pfd .calc text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+#pfd .calc.sel rect{stroke:var(--accent);stroke-width:2.4}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:14px;min-height:420px;align-content:start}
+.panel .kind{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.panel h3{font-size:1.5rem}
+.panel dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:.93rem}
+.panel dt{color:var(--muted)}
+.panel dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.panel .plain{background:var(--sunk);border-radius:10px;padding:12px 14px;font-size:.95rem}
+.panel ul{margin:0;padding-left:1.1em;display:grid;gap:4px;font-size:.94rem}
+.comp{display:grid;gap:6px}
+.comp .bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--sunk)}
+.comp .bar i{display:block;height:100%}
+.comp .keys{display:flex;gap:12px;flex-wrap:wrap;font-size:.82rem;font-family:var(--mono)}
+.steps-hint{font-size:.88rem;color:var(--muted);margin-top:10px}
+.walk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.btn{font:inherit;font-weight:600;font-size:.92rem;padding:9px 16px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.walk .count{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
+
+/* decanter */
+.dec{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:32px;align-items:center}
+.vessel-wrap{display:grid;justify-items:center;gap:14px}
+.vessel{width:min(300px,100%);aspect-ratio:3/4;max-width:100%;border:3px solid var(--ink);border-top-width:0;border-radius:0 0 40px 40px;position:relative;overflow:hidden;background:var(--surface)}
+.vessel .liq{position:absolute;left:0;right:0;transition:all 1.2s cubic-bezier(.3,.7,.2,1)}
+.vessel .top{top:18%;height:41%;background:var(--tern-soft)}
+.vessel .bot{top:59%;height:41%;background:var(--tern-soft)}
+.vessel.cool .top{background:var(--cyc-soft);height:62.5%;top:18%}
+.vessel.cool .bot{background:var(--water-soft);top:80.5%;height:19.5%}
+.vessel .seam{position:absolute;left:8%;right:8%;top:80.5%;border-top:2px dashed var(--ink);opacity:0;transition:opacity .6s .9s}
+.vessel.cool .seam{opacity:.6}
+.vessel .lbl{position:absolute;left:0;right:0;text-align:center;font-weight:600;font-size:.9rem;transition:opacity .5s}
+.vessel .l-mix{top:52%;opacity:1;color:var(--tern)}
+.vessel.cool .l-mix{opacity:0}
+.vessel .l-top,.vessel .l-bot{opacity:0;transition:opacity .5s 1s}
+.vessel .l-top{top:44%;color:var(--cyc)}
+.vessel .l-bot{top:86%;color:var(--water);font-size:.82rem}
+.vessel.cool .l-top,.vessel.cool .l-bot{opacity:1}
+.bubbles i{position:absolute;bottom:0;width:8px;height:8px;border-radius:50%;background:var(--tern);opacity:.35;animation:rise 2.4s infinite ease-in}
+.vessel.cool .bubbles{display:none}
+@keyframes rise{from{transform:translateY(0)}to{transform:translateY(-300px);opacity:0}}
+.thermo{font-family:var(--mono);font-size:1.4rem;font-weight:500}
+.split-cards{display:grid;gap:12px}
+.split-cards .card{display:grid;gap:8px}
+
+/* results */
+.calc-steps{counter-reset:s;display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.calc-steps li{counter-increment:s;display:grid;grid-template-columns:2rem 1fr;gap:10px;align-items:baseline}
+.calc-steps li::before{content:counter(s);font-family:var(--mono);font-size:.8rem;width:1.6rem;height:1.6rem;display:grid;place-items:center;border-radius:50%;background:var(--sunk);color:var(--muted)}
+.balance{width:100%;border-collapse:collapse;font-size:.93rem}
+.balance th,.balance td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right}
+.balance th:first-child,.balance td:first-child{text-align:left}
+.balance thead th{font-family:var(--mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;border-bottom:2px solid var(--ink)}
+.balance td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.balance td:first-child{font-family:var(--body);font-weight:600}
+.tbl{overflow-x:auto}
+.recycle{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.recycle .big{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:3rem;color:var(--cyc);line-height:1}
+
+/* energy */
+.ebars{display:grid;gap:14px}
+.erow{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:12px;align-items:center}
+.erow .nm{font-weight:600;font-size:.93rem}
+.erow .nm small{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+.etrack{display:grid;gap:4px}
+.ebar{height:16px;border-radius:4px;display:flex;align-items:center;min-width:2px}
+.ebar.h{background:var(--rec)}
+.ebar.c{background:var(--water)}
+.ebar span{font-family:var(--mono);font-size:.76rem;white-space:nowrap;padding-left:calc(100% + 8px);color:var(--ink)}
+.cost-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.cost-grid .card .big{font-family:var(--display);font-stretch:80%;font-weight:800;font-size:1.8rem}
+.cost-grid .card .lbl{font-size:.85rem;color:var(--muted)}
+
+/* gallery */
+.gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.gal button{all:unset;cursor:zoom-in;display:block;border-radius:10px}
+.gal button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.gal img{aspect-ratio:16/10;object-fit:cover;object-position:top left}
+.lightbox{position:fixed;inset:0;z-index:50;background:rgb(8 12 11 / .86);display:grid;place-items:center;padding:max(20px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lightbox figure{max-width:min(1200px,100%);display:grid;gap:10px}
+.lightbox img{max-height:78vh;width:auto;max-width:100%;margin:0 auto;border:none}
+.lightbox figcaption{color:#d7e0dd;text-align:center}
+.lightbox .x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));font:inherit;font-size:1rem;background:#fff;color:#111;border:none;border-radius:999px;padding:8px 14px;cursor:pointer}
+
+/* real plants */
+.plants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.plant{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;align-items:start;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.plant:hover{border-color:var(--muted)}
+.plant .ico{width:96px;height:96px;border-radius:10px;background:var(--sunk);display:grid;place-items:center}
+.plant .ico svg{width:64px;height:64px}
+.plant h3{font-size:1.08rem}
+.plant .src{font-family:var(--mono);font-size:.76rem;color:var(--muted);margin-top:6px}
+.plant .go{color:var(--water);font-weight:600;font-size:.9rem;margin-top:8px;display:inline-block}
+
+/* quiz */
+.quiz{display:grid;gap:16px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px}
+section.alt .q{background:var(--paper)}
+.q .qt{font-weight:600}
+.q .opts{display:grid;gap:8px}
+.q button.o{font:inherit;text-align:left;padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.q button.o:hover:not(:disabled){border-color:var(--muted)}
+.q button.o.right{border-color:var(--eth);background:var(--eth-soft)}
+.q button.o.wrong{border-color:var(--rec);background:var(--rec-soft)}
+.q button.o:disabled{cursor:default}
+.q .why{font-size:.93rem;color:var(--muted)}
+.score{font-family:var(--mono);font-size:.95rem}
+
+/* glossary */
+.gloss{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+details p{margin-top:8px;color:var(--muted);font-size:.95rem}
+
+/* sources */
+.works{display:grid;gap:12px;font-size:.93rem;overflow-wrap:anywhere}
+.two>*,.tour>*,.vle>*,.dec>*,.hero .wrap>*{min-width:0}
+.works p{padding-left:2.2em;text-indent:-2.2em}
+footer{padding-block:36px;border-top:1px solid var(--line);color:var(--muted);font-size:.86rem}
+
+
+/* purpose section */
+.reasons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.reasons .card{display:grid;gap:8px;align-content:start}
+.reasons .k{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.goals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.goals div{background:var(--surface);padding:16px;display:grid;gap:4px;align-content:start}
+.goals b{font-family:var(--display);font-stretch:85%;font-size:1.05rem}
+.goals span{font-size:.88rem;color:var(--muted)}
+.goals .ok{font-family:var(--mono);font-size:.78rem;color:var(--eth)}
+@media (max-width:900px){.reasons{grid-template-columns:minmax(0,1fr)}.goals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.goals{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){
+  .hero .wrap,.two,.vle,.tour,.dec{grid-template-columns:minmax(0,1fr)}
+  .uses,.gal,.cost-grid{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plants,.gloss{grid-template-columns:minmax(0,1fr)}
+  .panel{min-height:0}
+}
+@media (max-width:520px){
+  body{font-size:16px}
+  .hero{padding-block:36px 28px}
+  .brand span{display:none}
+  .plant{grid-template-columns:minmax(0,1fr)}
+  .plant .ico{display:none}
+  .erow{grid-template-columns:minmax(0,1fr)}
+  .recycle{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+<header class="top">
+<div class="wrap">
+<a class="brand" href="#top"><i aria-hidden="true"><b style="background:var(--eth)"></b><b style="background:var(--water)"></b><b style="background:var(--cyc)"></b></i><span>Azeotropic Distillation Simplified</span></a>
+<nav aria-label="Sections" class="toc">
+<a href="#purpose">Purpose</a><a href="#why">Why</a><a href="#stuck">The wall</a><a href="#trick">The trick</a><a href="#tour">Plant tour</a><a href="#decanter">Decanter</a><a href="#results">Results</a><a href="#energy">Energy</a><a href="#aspen">Aspen</a><a href="#quiz">Quiz</a><a href="#sources">Sources</a>
+</nav>
+</div>
+</header>
+<main id="top">
+<section class="hero hero-professional"><figure aria-label="Photograph of a working fuel-ethanol production facility" class="industrial-opening"><img alt="A real fuel-ethanol production facility near Fairmont, Nebraska, showing distillation buildings, storage tanks, and industrial infrastructure" decoding="async" loading="eager" src="images/photo-ddc5bfdc20ec.jpg"/><div class="industrial-opening-overlay"><span class="industrial-opening-label">REAL INDUSTRIAL FACILITY · REFERENCE PHOTOGRAPH</span><strong>From the real plant to the digital process</strong></div><figcaption>Advanced BioEnergy ethanol facility near Fairmont, Nebraska · Photograph: Ammodramus (2009), public domain · <a href="https://commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg" rel="noopener noreferrer" target="_blank">Original photograph</a> · Reference facility, not the Aspen-simulated design.</figcaption></figure>
+<div class="wrap">
+<div>
+<div class="eyebrow">CHE 433 · Process design project · University of Illinois Chicago</div>
+<h1>How do you get the last drop of water out of <em>ethanol</em>?</h1>
+<p class="lede">Boiling can separate ethanol from water, but only up to about 90% ethanol. This project uses a helper liquid, cyclohexane, to go the rest of the way. Here is the whole process in plain words, with the real numbers from our Aspen Plus V15 simulation.</p>
+<p class="byline"><strong>Parthav Patel</strong> · Department of Chemical Engineering, UIC · Fall 2026</p>
+</div>
+<div aria-label="Ethanol content at three points in the process" class="tubes">
+<div class="tubes-row">
+<div class="tube"><span class="val num">50%</span><div class="glass" style="--h:50%"></div><small>Feed<br/>going in</small></div>
+<div class="tube"><span class="val num">84%</span><div class="glass" style="--h:84%"></div><small>After<br/>Column 1</small></div>
+<div class="tube"><span class="val num" style="color:var(--eth)">99.95%</span><div class="glass" style="--h:99.95%"></div><small>Final<br/>product</small></div>
+</div>
+<div class="legend"><span><i class="sw" style="background:var(--eth)"></i>ethanol</span><span><i class="sw" style="background:var(--water-soft);border:1px solid var(--water)"></i>water</span><span>mol%</span></div>
+</div>
+</div>
+<div class="wrap statwrap">
+<div class="stats">
+<div class="stat"><div class="big num" style="color:var(--eth)">99.95%</div><div class="lbl">ethanol in the product (mole basis)</div></div>
+<div class="stat"><div class="big num">99.99%</div><div class="lbl">of the ethanol fed in ends up in the product</div></div>
+<div class="stat"><div class="big num" style="color:var(--cyc)">1.9 kg/h</div><div class="lbl">fresh cyclohexane needed; the rest is recycled</div></div>
+<div class="stat"><div class="big num" style="color:var(--rec)">7.6 MW</div><div class="lbl">of steam heat used by the three reboilers</div></div>
+</div>
+</div>
+</section>
+<section class="ch" id="purpose">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>Before we start</b> · Purpose of the project</div>
+<h2>Why are we doing this?</h2>
+<p class="lede" style="margin-top:0">Every engineering project starts with a job to do and a reason it is worth doing. Here are ours.</p>
+</div>
+<div class="reasons">
+<div class="card"><span class="k">Reason 1 · The need</span><h3>Fuel ethanol has to be almost water-free</h3><p class="note">Ethanol that is blended into gasoline must be anhydrous, and fuel standards set a minimum ethanol content: 98.70% by mass in Europe and 99.30% by mass in Brazil <span class="cite">(Miranda et al. 43)</span>. Ethanol straight out of fermentation is nowhere near that.</p></div>
+<div class="card"><span class="k">Reason 2 · The obstacle</span><h3>Plain boiling hits a wall</h3><p class="note">Ethanol and water form an azeotrope, so simple distillation cannot separate them completely <span class="cite">(Miranda et al. 43)</span>. A smarter process is needed. Engineers use several: extractive distillation, azeotropic distillation, distillation with salts, pressure-swing distillation and reactive distillation <span class="cite">(Miranda et al. 43)</span>.</p></div>
+<div class="card"><span class="k">Reason 3 · The choice</span><h3>Why azeotropic distillation with cyclohexane</h3><p class="note">In a published Aspen Plus comparison, the azeotropic route reached a higher ethanol purity than the extractive route, though it used more energy <span class="cite">(Miranda et al. 43)</span>. Cyclohexane has replaced benzene as the helper liquid over the years because it is much less toxic <span class="cite">(Miranda et al. 44)</span>.</p></div>
+<div class="card"><span class="k">Reason 4 · The method</span><h3>Test it on a computer before building it</h3><p class="note">A real plant costs millions of dollars; our early estimate is $4.79 million in capital alone. Aspen Plus lets us try stage counts, reflux ratios and recycle loops on screen, see the purity, energy and cost, and fix problems before any steel is ordered.</p></div>
+</div>
+<div class="two" style="margin-top:32px">
+<figure>
+<img alt="Aspen Plus FEED stream input form: 100 kmol/hr, 1 atm, vapor fraction 0, mole fractions 0.5 ethanol and 0.5 water" height="560" loading="lazy" src="images/photo-d9a8de65069e.jpg" width="940"/>
+<figcaption><strong>The job we were given.</strong> Our FEED stream as entered in Aspen Plus: 100 kmol/h of liquid at 1 atm, half ethanol and half water. Screenshot from the author's simulation file, 10 Nov. 2026.</figcaption>
+</figure>
+<figure>
+<img alt="Aspen Process Economic Analyzer summary: total capital cost 4,785,010 USD, total operating cost 3,926,032 USD per year, utilities 2,359,762 USD per year" height="520" loading="lazy" src="images/photo-761b62a5408b.jpg" width="730"/>
+<figcaption><strong>Why simulate first.</strong> The cost summary from the Aspen Process Economic Analyzer: $4.79 million to build and $3.93 million a year to run. Mistakes are cheap on a screen and expensive in steel. Screenshot from the author's simulation file, 10 Nov. 2026.</figcaption>
+</figure>
+</div>
+<h3 style="margin:36px 0 14px">What we set out to achieve</h3>
+<div class="goals">
+<div><b>Purity</b><span>Ethanol product of at least 99.95 mol%</span><span class="ok">Reached: 99.95 mol%</span></div>
+<div><b>Recovery</b><span>Lose as little ethanol as possible</span><span class="ok">Reached: 99.99%</span></div>
+<div><b>Reuse</b><span>Recycle the cyclohexane instead of buying it again</span><span class="ok">Reached: 1.9 kg/h makeup</span></div>
+<div><b>Know the cost</b><span>Measure the energy and money the process needs</span><span class="ok">Done: 7.6 MW, $4.79M</span></div>
+</div>
+<p class="note" style="margin-top:14px">For the published flowsheet our design builds on, see Figure 2 in Miranda et al. (45).</p>
+</div>
+</section>
+<section class="ch alt" id="why">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>1</b> · The problem</div>
+<h2>Why would anyone need ethanol with no water in it?</h2>
+</div>
+<div class="read stack">
+<p>Ethanol is the alcohol that yeast makes when it eats sugar. Factories make it from crops like corn and sugarcane <span class="cite">(Miranda et al. 43)</span>. What comes out of fermentation is mostly water with some ethanol in it, so the factory has to remove the water.</p>
+<p>There are two grades. <strong>Hydrated</strong> ethanol still contains some water. <strong>Anhydrous</strong> ethanol (the word means "without water") contains almost none, and that is the grade that gets mixed into gasoline <span class="cite">(Miranda et al. 43)</span>.</p>
+</div>
+<div class="uses">
+<div class="card"><span class="k">Fuel</span><h3>Blended into gasoline</h3><p class="note">Fuel rules set a minimum ethanol content. Europe's EN 15376 asks for 98.70% by mass and Brazil asks for 99.30% by mass <span class="cite">(Miranda et al. 43)</span>. Our product is 99.92% by mass.</p></div>
+<div class="card"><span class="k">Solvent</span><h3>Labs and factories</h3><p class="note">Dry ethanol dissolves things that water would interfere with, so it is a common solvent in laboratories and chemical plants.</p></div>
+<div class="card"><span class="k">Our feed</span><h3>A 50/50 mixture</h3><p class="note">Our simulated plant takes in 100 kmol/h of liquid that is half ethanol and half water (counted by molecules) and must return ethanol that is at least 99.95% pure.</p></div>
+</div>
+<div class="two" style="margin-top:40px">
+<div class="read stack">
+<h3>How distillation works, in one picture</h3>
+<p>Distillation separates liquids by boiling. Ethanol boils at about 78 °C and water at 100 °C, so when the mixture boils, the vapor carries more ethanol than the liquid it came from.</p>
+<p>A distillation column is a tall tower that repeats this boil-and-cool step on many levels, called <strong>stages</strong>. Vapor rises, liquid falls, and they meet on every stage. A heater at the bottom (the <strong>reboiler</strong>) makes vapor; a cooler at the top (the <strong>condenser</strong>) turns it back into liquid.</p>
+<p class="callout g">Rule of thumb: the stuff that boils more easily ends up at the <strong>top</strong>. The stuff that boils less easily ends up at the <strong>bottom</strong>.</p>
+</div>
+<figure>
+<div class="paperframe"><img alt="Cutaway drawing of a distillation column showing vapor rising, liquid falling, a condenser at the top and a reboiler at the bottom" height="920" loading="lazy" src="images/photo-c47bf5073338.jpg" width="1300"/></div>
+<figcaption>How one column works. Temperatures are those of Column 1 (C-101) in our simulation. Drawn by the author.</figcaption>
+</figure>
+</div><figure class="industrial-reference-feature"><a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank" title="View original credited photo"><img alt="What a distillation column looks like at industrial scale" decoding="async" loading="lazy" src="images/photo-deef68e6116a.jpg"/></a><figcaption><span class="eyebrow">FROM DIAGRAM TO REAL EQUIPMENT</span><strong>What a distillation column looks like at industrial scale</strong><span>These tall vessels are the real-world counterparts of the separation columns shown in the process explanation. This is a reference facility, not the simulated equipment.</span><small>Luigi Chiesa · 2005 · CC BY 3.0 · <a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank">Photo source</a></small></figcaption></figure>
+</div>
+</section>
+<section class="ch" id="stuck">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>2</b> · The wall</div>
+<h2>Boiling stops working at 89.6% ethanol</h2>
+<p class="lede" style="margin-top:0">Drag the slider to change how much ethanol is in the boiling liquid, and watch how much ethanol is in the vapor that comes off.</p>
+</div>
+<div class="vle">
+<div>
+<svg aria-label="Schematic chart of vapor ethanol content against liquid ethanol content" id="vle" viewbox="0 0 400 400"></svg>
+<p class="note" style="text-align:center;margin-top:6px">Schematic curve. Its shape is drawn for teaching; the meeting point at 89.6 mol% is the measured azeotrope <span class="cite">(Miranda et al. 44)</span>.</p>
+</div>
+<div>
+<label for="xslider" style="font-weight:600">Ethanol in the boiling liquid: <span class="num" id="xval">50</span> mol%</label>
+<input id="xslider" max="99" min="2" step="0.5" type="range" value="50"/>
+<div class="meters">
+<div class="meter"><div class="bar"><i id="mx"></i><span id="mxv">50%</span></div><label>Liquid</label></div>
+<div class="meter"><div class="bar"><i id="my"></i><span id="myv">66%</span></div><label>Vapor coming off</label></div>
+</div>
+<div aria-live="polite" class="verdict" id="verdict"></div>
+</div>
+</div>
+<div class="read stack" style="margin-top:30px">
+<p>That meeting point is called an <strong>azeotrope</strong>. At 1 atm it sits at 78.16 °C, with 89.6% ethanol and 10.4% water by molecules <span class="cite">(Miranda et al. 44)</span>. There, the vapor has exactly the same recipe as the liquid, so boiling no longer sorts anything. Adding more stages or more heat changes nothing. Ordinary distillation simply cannot reach 99.95%.</p>
+</div>
+<div class="industry-context"><div><span class="eyebrow">The industrial impact</span><h3>Why this limit matters in a real plant</h3><p>Distillation columns can concentrate ethanol, but ordinary distillation reaches an azeotropic limit. This is why a real fuel-ethanol facility needs an additional dehydration method.</p></div><figure class="industry-photo"><a aria-label="Open original image source: Operating fuel-ethanol facility" href="https://commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg" rel="noopener noreferrer" target="_blank"><img alt="Actual Advanced BioEnergy fuel ethanol plant near Fairmont, Nebraska (Ammodramus, 2009)" decoding="async" loading="lazy" src="images/photo-ddc5bfdc20ec.jpg"/></a><figcaption><strong>Operating fuel-ethanol facility</strong> — A real bioethanol plant, shown as context for the industrial separation problem.<span class="photo-credit">Photo source: <a href="https://commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg" rel="noopener noreferrer" target="_blank">Ammodramus · Wikimedia Commons · public domain</a>. Reference equipment photo; not the simulated project plant.</span></figcaption></figure></div></div>
+</section>
+<section class="ch alt" id="trick">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>3</b> · The trick</div>
+<h2>Add a third liquid that drags the water away</h2>
+<p class="lede" style="margin-top:0">The helper liquid is <span class="c">cyclohexane</span>, an oily liquid that does not mix with water. Engineers call a helper like this an <strong>entrainer</strong>. It does not react with anything; it only changes how the mixture boils.</p>
+</div>
+<div class="two">
+<div class="stack">
+<h3>The boiling-point ladder</h3>
+<p class="note">Mixtures of these three liquids each have their own boiling point. Lowest boils first, so it rises to the top of the column. Tap a rung.</p>
+<div class="ladder" id="ladder"></div>
+</div>
+<div class="stack">
+<div aria-live="polite" class="card ladder-detail" id="ladder-detail"></div>
+<h3 style="margin-top:8px">What cyclohexane does, in three moves</h3>
+<ol class="calc-steps">
+<li><span><strong>It carries the water up.</strong> Ethanol, water and cyclohexane together boil at about 62 °C, lower than anything else in the column. That mixture rises to the top and takes the water with it, so the ethanol left behind flows down dry.</span></li>
+<li><span><strong>It separates itself afterward.</strong> When that top vapor is cooled into liquid, it splits into two layers, like oil and vinegar <span class="cite">(Gomis et al. 7)</span>. A simple tank can pour them apart.</span></li>
+<li><span><strong>It gets reused.</strong> The cyclohexane layer goes straight back to the column, so the plant only tops up the tiny amount that escapes.</span></li>
+</ol>
+</div>
+</div>
+<div class="industry-spotlight"><figure class="industry-photo"><a aria-label="Open original image source: Real industrial distillation towers" href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank"><img alt="Actual industrial distillation columns photographed by Luigi Chiesa (2005)" decoding="async" loading="lazy" src="images/photo-deef68e6116a.jpg"/></a><figcaption><strong>Real industrial distillation towers</strong> — The three columns in our Aspen flowsheet represent tall process equipment of this kind.<span class="photo-credit">Photo source: <a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank">Luigi Chiesa · Wikimedia Commons · CC BY 3.0</a>. Reference equipment photo; not the simulated project plant.</span></figcaption></figure><div class="spotlight-copy"><span class="eyebrow">The chemistry meets the hardware</span><h3>What does this look like outside the simulator?</h3><p>Real plants use tall steel towers rather than the small rectangles in a process diagram. Vapors rise, liquids flow downward, and separation takes place inside each tower. Our simulation models the separation behavior, not the physical appearance of a constructed plant.</p></div></div></div>
+</section>
+<section class="ch" id="tour">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>4</b> · Plant tour</div>
+<h2>Walk through the plant, one unit at a time</h2>
+<p class="lede" style="margin-top:0">Tap any unit or stream for its job and its numbers. Use the buttons to follow one chemical through the plant, or take the guided walk.</p>
+</div>
+<div aria-label="Highlight a chemical" class="modes" role="group">
+<button aria-pressed="true" class="chip" data-mode="all">Show everything</button>
+<button aria-pressed="false" class="chip" data-mode="eth"><i class="sw" style="background:var(--eth)"></i>Follow the ethanol</button>
+<button aria-pressed="false" class="chip" data-mode="water"><i class="sw" style="background:var(--water)"></i>Follow the water</button>
+<button aria-pressed="false" class="chip" data-mode="cyc"><i class="sw" style="background:var(--cyc)"></i>Follow the cyclohexane</button>
+<button aria-pressed="true" class="chip" id="animtoggle">Moving flow</button>
+</div>
+<div class="tour">
+<div>
+<div class="pfd-box"><svg aria-labelledby="pfd-t" id="pfd" role="img" viewbox="0 0 1020.8 553.9"><title id="pfd-t">Interactive process flow diagram</title>
+<defs>
+<marker id="ar-feed" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-feed" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ar-water" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-water" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ar-eth" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-eth" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ar-cyc" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-cyc" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ar-tern" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-tern" d="M0,0 L10,5 L0,10 z"></path></marker>
+<marker id="ar-rec" markerheight="5.5" markerwidth="5.5" orient="auto-start-reverse" refx="8.5" refy="5" viewbox="0 0 10 10"><path class="mk mk-rec" d="M0,0 L10,5 L0,10 z"></path></marker>
+</defs>
+<g aria-label="Stream FEED" class="st st-feed" data-s="FEED" role="button" tabindex="0">
+<path class="hit" d="M14.5,342.2 L145.0,342.2"></path>
+<path class="line" d="M14.5,342.2 L145.0,342.2" marker-end="url(#ar-feed)"></path>
+<path class="flow" d="M14.5,342.2 L145.0,342.2"></path>
+<text class="slabel" text-anchor="middle" x="78.3" y="321.9">FEED</text>
+</g>
+<g aria-label="Stream S2" class="st st-feed" data-s="S2" role="button" tabindex="0">
+<path class="hit" d="M226.2,342.2 L310.3,342.2"></path>
+<path class="line" d="M226.2,342.2 L310.3,342.2" marker-end="url(#ar-feed)"></path>
+<path class="flow" d="M226.2,342.2 L310.3,342.2"></path>
+<text class="slabel" text-anchor="middle" x="268.0" y="321.9">S2</text>
+</g>
+<g aria-label="Stream S1" class="st st-feed" data-s="S1" role="button" tabindex="0">
+<path class="hit" d="M359.6,261.0 L359.6,214.6 L469.8,214.6 L469.8,307.4 L542.3,307.4"></path>
+<path class="line" d="M359.6,261.0 L359.6,214.6 L469.8,214.6 L469.8,307.4 L542.3,307.4" marker-end="url(#ar-feed)"></path>
+<path class="flow" d="M359.6,261.0 L359.6,214.6 L469.8,214.6 L469.8,307.4 L542.3,307.4"></path>
+<text class="slabel" text-anchor="middle" x="414.7" y="201.8">S1</text>
+</g>
+<g aria-label="Stream WATER1" class="st st-water" data-s="WATER1" role="button" tabindex="0">
+<path class="hit" d="M359.6,435.0 L359.6,530.7"></path>
+<path class="line" d="M359.6,435.0 L359.6,530.7" marker-end="url(#ar-water)"></path>
+<path class="flow" d="M359.6,435.0 L359.6,530.7"></path>
+<text class="slabel" text-anchor="start" x="370.0" y="504.6">WATER1</text>
+</g>
+<g aria-label="Stream CYCLOHEX" class="st st-cyc" data-s="CYCLOHEX" role="button" tabindex="0">
+<path class="hit" d="M179.8,116.0 L313.2,116.0"></path>
+<path class="line" d="M179.8,116.0 L313.2,116.0" marker-end="url(#ar-cyc)"></path>
+<path class="flow" d="M179.8,116.0 L313.2,116.0"></path>
+<text class="slabel" text-anchor="middle" x="243.6" y="99.8">CYCLOHEX</text>
+</g>
+<g aria-label="Stream REC-SOL" class="st st-cyc" data-s="REC-SOL" role="button" tabindex="0">
+<path class="hit" d="M771.4,127.6 L771.4,52.2 L359.6,52.2 L359.6,89.9"></path>
+<path class="line" d="M771.4,127.6 L771.4,52.2 L359.6,52.2 L359.6,89.9" marker-end="url(#ar-cyc)"></path>
+<path class="flow" d="M771.4,127.6 L771.4,52.2 L359.6,52.2 L359.6,89.9"></path>
+<text class="slabel" text-anchor="middle" x="574.2" y="37.7">REC-SOL</text>
+</g>
+<g aria-label="Stream SOLVENT" class="st st-cyc" data-s="SOLVENT" role="button" tabindex="0">
+<path class="hit" d="M406.0,116.0 L504.6,116.0 L504.6,261.0 L542.3,261.0"></path>
+<path class="line" d="M406.0,116.0 L504.6,116.0 L504.6,261.0 L542.3,261.0" marker-end="url(#ar-cyc)"></path>
+<path class="flow" d="M406.0,116.0 L504.6,116.0 L504.6,261.0 L542.3,261.0"></path>
+<text class="slabel" text-anchor="middle" x="458.2" y="101.5">SOLVENT</text>
+</g>
+<g aria-label="Stream RICH-SOL" class="st st-tern" data-s="RICH-SOL" role="button" tabindex="0">
+<path class="hit" d="M591.6,237.8 L591.6,162.4 L707.6,162.4"></path>
+<path class="line" d="M591.6,237.8 L591.6,162.4 L707.6,162.4" marker-end="url(#ar-tern)"></path>
+<path class="flow" d="M591.6,237.8 L591.6,162.4 L707.6,162.4"></path>
+<text class="slabel" text-anchor="middle" x="649.6" y="147.9">RICH-SOL</text>
+</g>
+<g aria-label="Stream TO-REC" class="st st-rec" data-s="TO-REC" role="button" tabindex="0">
+<path class="hit" d="M835.2,162.4 L994.7,162.4 L994.7,382.8 L954.1,382.8"></path>
+<path class="line" d="M835.2,162.4 L994.7,162.4 L994.7,382.8 L954.1,382.8" marker-end="url(#ar-rec)"></path>
+<path class="flow" d="M835.2,162.4 L994.7,162.4 L994.7,382.8 L954.1,382.8"></path>
+<text class="slabel" text-anchor="middle" x="916.4" y="147.9">TO-REC</text>
+</g>
+<g aria-label="Stream RCY-FEED" class="st st-rec" data-s="RCY-FEED" role="button" tabindex="0">
+<path class="hit" d="M904.8,261.0 L904.8,226.2 L675.7,226.2 L675.7,307.4 L640.9,307.4"></path>
+<path class="line" d="M904.8,261.0 L904.8,226.2 L675.7,226.2 L675.7,307.4 L640.9,307.4" marker-end="url(#ar-rec)"></path>
+<path class="flow" d="M904.8,261.0 L904.8,226.2 L675.7,226.2 L675.7,307.4 L640.9,307.4"></path>
+<text class="slabel" text-anchor="middle" x="788.8" y="211.7">RCY-FEED</text>
+</g>
+<g aria-label="Stream ETHANOL" class="st st-eth" data-s="ETHANOL" role="button" tabindex="0">
+<path class="hit" d="M591.6,446.6 L591.6,530.7"></path>
+<path class="line" d="M591.6,446.6 L591.6,530.7" marker-end="url(#ar-eth)"></path>
+<path class="flow" d="M591.6,446.6 L591.6,530.7"></path>
+<text class="slabel" text-anchor="start" x="602.0" y="504.6">ETHANOL</text>
+</g>
+<g aria-label="Stream WATER2" class="st st-water" data-s="WATER2" role="button" tabindex="0">
+<path class="hit" d="M904.8,435.0 L904.8,530.7"></path>
+<path class="line" d="M904.8,435.0 L904.8,530.7" marker-end="url(#ar-water)"></path>
+<path class="flow" d="M904.8,435.0 L904.8,530.7"></path>
+<text class="slabel" text-anchor="start" x="915.2" y="504.6">WATER2</text>
+</g>
+<g aria-label="Calculator B1" class="calc" data-u="B1" role="button" tabindex="0"><rect height="43.5" rx="6" width="150.8" x="101.5" y="168.2"></rect><text text-anchor="middle" x="176.9" y="194.3">B1 calculator</text><path d="M179.8,168.2 L179.8,121.8"></path></g>
+<g aria-label="P-101, Pump" class="blk blk-pump" data-u="P-101" role="button" tabindex="0">
+<rect class="body" height="58.0" rx="9" width="81.19999999999999" x="145.0" y="313.2"></rect>
+<text class="bname" text-anchor="middle" x="185.6" y="341.2">P-101</text>
+<text class="bsub" text-anchor="middle" x="185.6" y="355.2">Pump</text>
+</g>
+<g aria-label="C-101, Column 1" class="blk blk-col" data-u="C-101" role="button" tabindex="0">
+<rect class="body" height="174.00000000000003" rx="37.9" width="98.60000000000001" x="310.3" y="261.0"></rect>
+<path class="tray" d="M314.3,285.9 L381.3,285.9"></path>
+<path class="tray" d="M337.9,310.7 L404.90000000000003,310.7"></path>
+<path class="tray" d="M314.3,335.6 L381.3,335.6"></path>
+<path class="tray" d="M337.9,360.4 L404.90000000000003,360.4"></path>
+<path class="tray" d="M314.3,385.3 L381.3,385.3"></path>
+<path class="tray" d="M337.9,410.1 L404.90000000000003,410.1"></path>
+<rect class="tag" height="34" rx="5" width="86.60000000000001" x="316.3" y="331.0"></rect>
+<text class="bname" text-anchor="middle" x="359.6" y="347.0">C-101</text>
+<text class="bsub" text-anchor="middle" x="359.6" y="360.0">Column 1</text>
+</g>
+<g aria-label="MIX, Mixer" class="blk blk-mix" data-u="MIX" role="button" tabindex="0">
+<rect class="body" height="52.19999999999997" rx="9" width="92.80000000000003" x="313.2" y="89.9"></rect>
+<text class="bname" text-anchor="middle" x="359.6" y="114.99999999999999">MIX</text>
+<text class="bsub" text-anchor="middle" x="359.6" y="129.0">Mixer</text>
+</g>
+<g aria-label="COL-MAIN, Column 2" class="blk blk-col" data-u="COL-MAIN" role="button" tabindex="0">
+<rect class="body" height="208.79999999999998" rx="37.9" width="98.59999999999997" x="542.3" y="237.8"></rect>
+<path class="tray" d="M546.3,267.6 L613.3,267.6"></path>
+<path class="tray" d="M569.9,297.5 L636.8999999999999,297.5"></path>
+<path class="tray" d="M546.3,327.3 L613.3,327.3"></path>
+<path class="tray" d="M569.9,357.1 L636.8999999999999,357.1"></path>
+<path class="tray" d="M546.3,386.9 L613.3,386.9"></path>
+<path class="tray" d="M569.9,416.8 L636.8999999999999,416.8"></path>
+<rect class="tag" height="34" rx="5" width="86.59999999999997" x="548.3" y="325.2"></rect>
+<text class="bname" text-anchor="middle" x="591.5999999999999" y="341.2">COL-MAIN</text>
+<text class="bsub" text-anchor="middle" x="591.5999999999999" y="354.2">Column 2</text>
+</g>
+<g aria-label="DECANTER, Decanter" class="blk blk-dec" data-u="DECANTER" role="button" tabindex="0">
+<rect class="body" height="69.60000000000001" rx="34.8" width="127.60000000000007" x="707.6" y="127.6"></rect>
+<path class="layer-top" d="M742.4,131.6 L800.4,131.6 A30.8,30.8 0 0 1 831.2,162.4 L711.6,162.4 A30.8,30.8 0 0 1 742.4,131.6 z"></path>
+<path class="layer-bot" d="M711.6,162.4 L831.2,162.4 A30.8,30.8 0 0 1 800.4,193.2 L742.4,193.2 A30.8,30.8 0 0 1 711.6,162.4 z"></path>
+<text class="bname" text-anchor="middle" x="771.4000000000001" y="166.4">DECANTER</text>
+</g>
+<g aria-label="COL-REC, Column 3" class="blk blk-col" data-u="COL-REC" role="button" tabindex="0">
+<rect class="body" height="174.00000000000003" rx="37.9" width="98.59999999999997" x="855.5" y="261.0"></rect>
+<path class="tray" d="M859.5,285.9 L926.5,285.9"></path>
+<path class="tray" d="M883.1,310.7 L950.0999999999999,310.7"></path>
+<path class="tray" d="M859.5,335.6 L926.5,335.6"></path>
+<path class="tray" d="M883.1,360.4 L950.0999999999999,360.4"></path>
+<path class="tray" d="M859.5,385.3 L926.5,385.3"></path>
+<path class="tray" d="M883.1,410.1 L950.0999999999999,410.1"></path>
+<rect class="tag" height="34" rx="5" width="86.59999999999997" x="861.5" y="331.0"></rect>
+<text class="bname" text-anchor="middle" x="904.8" y="347.0">COL-REC</text>
+<text class="bsub" text-anchor="middle" x="904.8" y="360.0">Column 3</text>
+</g>
+<text class="term term-feed" text-anchor="start" x="14.5" y="368.3">IN · 50/50 mix</text>
+<text class="term term-cyc" text-anchor="middle" x="174.0" y="78.3">IN · fresh cyclohexane</text>
+<text class="term term-water" text-anchor="middle" x="359.6" y="548.1">OUT · water</text>
+<text class="term term-eth" text-anchor="middle" x="591.6" y="548.1">OUT · 99.95% ethanol</text>
+<text class="term term-water" text-anchor="middle" x="904.8" y="548.1">OUT · water</text>
+</svg></div>
+<div class="walk">
+<button class="btn" disabled="" id="walkprev">Back</button>
+<button class="btn" id="walknext">Start the guided walk</button>
+<span class="count" id="walkcount"></span>
+</div>
+<p class="steps-hint">Line colours: grey = ethanol–water feed, <span class="w">blue</span> = water out, <span class="e">green</span> = ethanol product, <span class="c">amber</span> = cyclohexane-rich, <span style="color:var(--tern);font-weight:600">purple</span> = all three mixed, <span style="color:var(--rec);font-weight:600">pink</span> = ethanol–water recycle.</p>
+</div>
+<aside aria-live="polite" class="panel" id="panel"></aside>
+</div><figure class="industrial-reference-feature"><a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank" title="View original credited photo"><img alt="Real distillation towers, beside the interactive plant tour" decoding="async" loading="lazy" src="images/photo-deef68e6116a.jpg"/></a><figcaption><span class="eyebrow">THE REAL-WORLD SCALE</span><strong>Real distillation towers, beside the interactive plant tour</strong><span>Compare the interactive Aspen process blocks above with the height, platforms, and piping of full-scale separation equipment.</span><small>Luigi Chiesa · 2005 · CC BY 3.0 · <a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener noreferrer" target="_blank">Photo source</a></small></figcaption></figure>
+</div>
+</section>
+<section class="ch alt" id="decanter">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>5</b> · The decanter</div>
+<h2>The oil-and-vinegar moment</h2>
+<p class="lede" style="margin-top:0">The liquid from the top of Column 2 arrives warm and mixed. Cool it down and watch what happens.</p>
+</div>
+<div class="dec">
+<div class="vessel-wrap">
+<div class="thermo" id="thermo">62.0 °C</div>
+<div aria-label="Decanter vessel" class="vessel" id="vessel">
+<div class="liq top"></div><div class="liq bot"></div><div class="seam"></div>
+<div aria-hidden="true" class="bubbles"><i style="left:20%;animation-delay:0s"></i><i style="left:45%;animation-delay:.8s"></i><i style="left:70%;animation-delay:1.5s"></i><i style="left:32%;animation-delay:2s"></i></div>
+<div class="lbl l-mix">One mixed liquid</div>
+<div class="lbl l-top">Top layer<br/>mostly cyclohexane</div>
+<div class="lbl l-bot">Bottom layer: ethanol + water</div>
+</div>
+<button class="btn" id="coolbtn">Cool it to 25 °C</button>
+</div>
+<div class="split-cards" id="splitcards"></div>
+</div>
+<div class="industry-context"><div><span class="eyebrow">Industrial equipment in context</span><h3>Separating liquids is only part of the equipment story</h3><p>A full-scale design must also cool the overhead stream before the two liquid layers are allowed to settle. The heat exchanger below is <strong>a reference photo of industrial cooling hardware</strong>, not the decanter itself. The interactive vessel above shows the decanter's separation principle.</p></div><figure class="industry-photo"><a aria-label="Open original image source: Industrial shell-and-tube heat exchanger" href="https://commons.wikimedia.org/wiki/File:Shell_and_tube_heat_exchanger.jpg" rel="noopener noreferrer" target="_blank"><img alt="Industrial shell-and-tube heat exchanger" decoding="async" loading="lazy" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Shell_and_tube_heat_exchanger.jpg?width=1100"/></a><figcaption><strong>Industrial shell-and-tube heat exchanger</strong> — An example of heat-transfer hardware used for heating or cooling process fluids.<span class="photo-credit">Photo source: <a href="https://commons.wikimedia.org/wiki/File:Shell_and_tube_heat_exchanger.jpg" rel="noopener noreferrer" target="_blank">Alnitak3 · Wikimedia Commons · CC BY-SA 4.0</a>. Reference equipment photo; not the simulated project plant.</span></figcaption></figure></div></div>
+</section>
+<section class="ch" id="results">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>6</b> · Results</div>
+<h2>Did it work? Everything is accounted for.</h2>
+</div>
+<div class="two">
+<div class="stack">
+<h3>Purity vs. recovery</h3>
+<p><strong>Purity</strong> asks how clean the product is. <strong>Recovery</strong> asks how much of the ethanol we started with made it into the product. Here is the recovery, one step at a time:</p>
+<ol class="calc-steps">
+<li><span>Ethanol fed in = 100 kmol/h × 0.50 = <span class="num">50.000</span> kmol/h</span></li>
+<li><span>Ethanol in the product = 50.0206 kmol/h × 0.9995 = <span class="num">49.9956</span> kmol/h</span></li>
+<li><span>Recovery = 49.9956 ÷ 50.000 = <strong class="num e">99.991%</strong></span></li>
+</ol>
+<p class="note">The product is 99.95% ethanol by molecules (99.92% by mass). The remaining 0.05% is 0.046% cyclohexane and 0.004% water.</p>
+</div>
+<div class="stack">
+<h3>What goes in must come out</h3>
+<div class="tbl"><table class="balance">
+<thead><tr><th>Chemical (kmol/h)</th><th>In</th><th>Ethanol out</th><th>Water 1</th><th>Water 2</th></tr></thead>
+<tbody>
+<tr><td class="e">Ethanol</td><td>50.0000</td><td>49.9956</td><td>0.0035</td><td>0.0010</td></tr>
+<tr><td class="w">Water</td><td>50.0000</td><td>0.0022</td><td>40.4365</td><td>9.5613</td></tr>
+<tr><td class="c">Cyclohexane</td><td>0.0228</td><td>0.0228</td><td>0.0000</td><td>0.0000</td></tr>
+</tbody>
+</table></div>
+<p class="note">Each row adds up: what enters equals what leaves, to four decimal places. Calculated from the Aspen Plus stream results.</p>
+<div class="card recycle">
+<div class="big num">99.99%</div>
+<p>of the cyclohexane flowing into Column 2 is recycled. About 357.7 kmol/h circulates, and only 0.0228 kmol/h (1.9 kg/h) of fresh cyclohexane is added to replace what leaves in the product.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="ch alt" id="energy">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>7</b> · Energy and cost</div>
+<h2>The price of breaking an azeotrope is heat</h2>
+<p class="lede" style="margin-top:0">Every column needs a heater at the bottom and a cooler at the top. Column 2, where the azeotrope is broken, uses half of all the heat.</p>
+</div>
+<div class="two">
+<div class="stack">
+<div class="ebars" id="ebars"></div>
+<div class="legend" style="justify-content:flex-start"><span><i class="sw" style="background:var(--rec)"></i>Heat added (steam reboiler)</span><span><i class="sw" style="background:var(--water)"></i>Heat removed (cooling)</span></div>
+<p class="note">kW, from Aspen Plus duties in cal/sec × 4.1868 J/cal.</p>
+</div>
+<div class="stack">
+<div class="cost-grid">
+<div class="card"><div class="big num">$4.79M</div><div class="lbl">total capital cost</div></div>
+<div class="card"><div class="big num">$2.36M</div><div class="lbl">utilities per year</div></div>
+<div class="card"><div class="big num" style="color:var(--rec)">94%</div><div class="lbl">of the utility bill is steam</div></div>
+</div>
+<p>For every kilogram of ethanol, the reboilers use about <strong>3.3 kWh</strong> of heat. In the water-removal section, our design uses about <strong>111.7 kWh per kmol</strong> of ethanol, roughly twice the 52.2 kWh per kmol of a published reference design <span class="cite">(Miranda et al. 47)</span>.</p>
+<p class="callout">That gap is the clearest next step: tune the reflux ratios, feed stages and solvent flow to cut the steam bill. Cost estimates are from the Aspen Process Economic Analyzer and are early screening numbers.</p>
+</div>
+</div>
+<div class="industry-context"><div><span class="eyebrow">Why utilities matter</span><h3>Real equipment behind the energy numbers</h3><p>Reboilers add heat and condensers remove heat. At industrial scale, heat-transfer equipment is central to operating costs. The photograph shows a representative shell-and-tube heat exchanger; its specific duty and specifications are not those of our simulation.</p></div><figure class="industry-photo"><a aria-label="Open original image source: A full-scale heat exchanger" href="https://commons.wikimedia.org/wiki/File:Shell_and_tube_heat_exchanger.jpg" rel="noopener noreferrer" target="_blank"><img alt="A full-scale heat exchanger" decoding="async" loading="lazy" src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Shell_and_tube_heat_exchanger.jpg?width=1100"/></a><figcaption><strong>A full-scale heat exchanger</strong> — Reference example of equipment used to exchange thermal energy between process fluids.<span class="photo-credit">Photo source: <a href="https://commons.wikimedia.org/wiki/File:Shell_and_tube_heat_exchanger.jpg" rel="noopener noreferrer" target="_blank">Alnitak3 · Wikimedia Commons · CC BY-SA 4.0</a>. Reference equipment photo; not the simulated project plant.</span></figcaption></figure></div></div>
+</section>
+<section class="ch" id="aspen">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>8</b> · Inside the software</div>
+<h2>The real simulation in Aspen Plus V15</h2>
+<p class="lede" style="margin-top:0">Aspen Plus works like a flight simulator for chemical plants: it calculates what each unit would do before anything is built. These are screenshots from our simulation file. Tap one to enlarge it.</p>
+</div>
+<div aria-label="Large Aspen Plus simulation screenshots" class="aspen-showcase" id="gal">
+<div class="aspen-feature aspen-feature-primary"><div class="aspen-feature-head"><span class="eyebrow">01 · Full process overview</span><h3>Aspen Plus process flowsheet</h3><p class="note">Full-width view of the actual process flowsheet. Click the screenshot to enlarge it further.</p></div><figure><button data-cap="Our flowsheet in Aspen Plus V15. Q values are heat duties in cal/sec." data-full="images/photo-2d848b554c64.jpg"><img alt="Aspen Plus flowsheet with three columns, a decanter, a mixer and a pump" height="686" loading="lazy" src="images/photo-2d848b554c64.jpg" width="1400"/></button><figcaption>The flowsheet as built in Aspen Plus.</figcaption></figure></div>
+<div class="aspen-feature aspen-feature-results"><div class="aspen-feature-head"><span class="eyebrow">02 · Simulation data</span><h3>Actual stream results and compositions</h3><p class="note">The product composition is easier to read in this expanded display.</p></div><figure><button data-cap="Stream results for the three outlet streams: ETHANOL, WATER1 and WATER2." data-full="images/photo-6bd0494cc565.jpg"><img alt="Aspen Plus stream results table showing ETHANOL at 0.9995 mole fraction ethanol" height="740" loading="lazy" src="images/photo-6bd0494cc565.jpg" width="1100"/></button><figcaption>Stream results: the product hits 0.9995.</figcaption></figure></div>
+<div class="aspen-feature aspen-feature-cost"><div class="aspen-feature-head"><span class="eyebrow">03 · Process economics</span><h3>Equipment and cost results</h3><p class="note">Economic analyzer screenshot shown at its full section width.</p></div><figure><button data-cap="Equipment and utility costs from the Aspen Process Economic Analyzer." data-full="images/photo-f132c36003fa.jpg"><img alt="Aspen Process Economic Analyzer table of equipment, installed and utility costs" height="377" loading="lazy" src="images/photo-f132c36003fa.jpg" width="1400"/></button><figcaption>Cost results from the economic analyzer.</figcaption></figure></div>
+</div>
+<p class="note" style="margin-top:14px">Screenshots: author's simulation file Ethanol_BaseCase.bkp, Aspen Plus V15, 10 Nov. 2026.</p>
+</div>
+</section>
+<section class="ch alt" id="real">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>9</b> · In the real world</div>
+<h2>What these units look like at full scale</h2>
+<p class="lede" style="margin-top:0">Our plant exists only in the simulator. These freely licensed photographs show the real thing.</p>
+</div>
+<div class="plants">
+<a class="plant photo-card" href="https://commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg" rel="noopener" target="_blank"><div class="plant-photo"><img alt="Actual Advanced BioEnergy fuel ethanol plant near Fairmont, Nebraska (Ammodramus, 2009)" decoding="async" loading="lazy" src="images/photo-ddc5bfdc20ec.jpg"/></div><div><h3>A working fuel-ethanol plant</h3><p class="note">The Advanced BioEnergy plant near Fairmont, Nebraska, makes fuel ethanol from crops. Plants like this ferment the crop, then remove the water by distillation, the same job our simulated plant does.</p><div class="src">Photo: Ammodramus, 2009 · Wikimedia Commons · public domain</div><span class="go">View the photograph ↗</span></div></a>
+<a class="plant photo-card" href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener" target="_blank"><div class="plant-photo"><img alt="Actual industrial distillation columns photographed by Luigi Chiesa (2005)" decoding="async" loading="lazy" src="images/photo-deef68e6116a.jpg"/></div><div><h3>Real distillation columns</h3><p class="note">An industrial distillation plant with two tall columns. Our C-101, COL-MAIN and COL-REC would look like towers of this kind, with the reboiler at the base and the condenser at the top.</p><div class="src">Photo: Luigi Chiesa, 2005 · Wikimedia Commons · CC BY 3.0</div><span class="go">View the photograph ↗</span></div></a>
+</div>
+</div>
+</section>
+<section class="ch" id="quiz">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow"><b>10</b> · Check yourself</div>
+<h2>Five quick questions</h2>
+<p aria-live="polite" class="score" id="score">Score: 0 / 5</p>
+</div>
+<div class="quiz" id="quizbox"></div>
+</div>
+</section>
+<section class="ch alt" id="words">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow">Words to know</div>
+<h2>Glossary</h2>
+</div>
+<div class="gloss" id="gloss"></div>
+</div>
+</section>
+<section class="ch" id="sources">
+<div class="wrap">
+<div class="ch-head">
+<div class="eyebrow">Works Cited (MLA)</div>
+<h2>Sources and image credits</h2>
+</div>
+<div class="works read">
+<p>Ammodramus. "Advanced BioEnergy Ethanol Plant near Fairmont, Nebraska." <em>Wikimedia Commons</em>, 9 Nov. 2009, <a href="https://commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg" rel="noopener" target="_blank">commons.wikimedia.org/wiki/File:Advanced_Bioenergy_plant_1.jpg</a>. Photograph, public domain.</p>
+<p>Aspen Technology, Inc. <em>Aspen Plus</em>. Version 15, Aspen Technology. Simulation file <em>Ethanol_BaseCase.bkp</em> and Aspen Process Economic Analyzer results by the author, 10 Nov. 2026.</p>
+<p>Chiesa, Luigi. "A Double Effect Distillation Plant." <em>Wikimedia Commons</em>, 18 Nov. 2005, <a href="https://commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg" rel="noopener" target="_blank">commons.wikimedia.org/wiki/File:Colonne_distillazione.jpg</a>. Photograph, CC BY 3.0.</p>
+<p>Gomis, Vicente, et al. "Isobaric Vapor–Liquid and Vapor–Liquid–Liquid Equilibrium Data for the System Water + Ethanol + Cyclohexane." <em>Fluid Phase Equilibria</em>, vol. 235, no. 1, 2005, pp. 7–10, <a href="https://doi.org/10.1016/j.fluid.2005.07.015" rel="noopener" target="_blank">doi.org/10.1016/j.fluid.2005.07.015</a>.</p>
+<p>Miranda, Nahieh T., et al. "Comparison of Complete Extractive and Azeotropic Distillation Processes for Anhydrous Ethanol Production Using Aspen Plus™ Simulator." <em>Chemical Engineering Transactions</em>, vol. 80, 2020, pp. 43–48, <a href="https://doi.org/10.3303/CET2080008" rel="noopener" target="_blank">doi.org/10.3303/CET2080008</a>.</p>
+<p>National Institute for Occupational Safety and Health. "Cyclohexane." <em>NIOSH Pocket Guide to Chemical Hazards</em>, Centers for Disease Control and Prevention, <a href="https://www.cdc.gov/niosh/npg/npgd0163.html" rel="noopener" target="_blank">www.cdc.gov/niosh/npg/npgd0163.html</a>. Accessed 14 Nov. 2026.</p>
+<p>Patel, Parthav. "Aspen Plus V15 Original Screenshots: Ethanol_BaseCase.bkp." 10 Nov. 2026. Screenshots of the author's simulation, PDF.</p>
+<p>Patel, Parthav. "Making Water-Free Ethanol from an Ethanol–Water Mixture by Azeotropic Distillation with Cyclohexane Using Aspen Plus V15." CHE 433 project paper, University of Illinois Chicago, 12 Nov. 2026.</p>
+</div>
+<p class="note read" style="margin-top:18px">Diagrams, charts and the column drawing on this page were made by the author from the simulation results. All stream numbers come from the Aspen Plus V15 base case unless a source is cited.</p>
+</div>
+</section>
+</main>
+<footer><div class="wrap">Parthav Patel · CHE 433 · University of Illinois Chicago · Fall 2026. Cyclohexane and ethanol are flammable liquids <span class="cite">(National Institute for Occupational Safety and Health)</span>; this page describes a computer simulation, not a lab procedure.</div></footer>
+<div aria-label="Enlarged screenshot" aria-modal="true" class="lightbox" hidden="" id="lightbox" role="dialog">
+<button class="x" id="lbclose">Close</button>
+<figure><img alt="" id="lbimg"/><figcaption id="lbcap"></figcaption></figure>
+</div>
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const fmt=(v,d=1)=>Number(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+/* ---------- 2. VLE slider (schematic) ---------- */
+const XS=[0,.019,.0721,.0966,.1238,.1661,.2337,.2608,.3273,.3965,.5079,.5198,.5732,.6763,.7472,.8960,1];
+const YS=[0,.17,.3891,.4375,.4704,.5089,.5445,.558,.5826,.6122,.6564,.6599,.6841,.7385,.7815,.8960,1];
+function yOf(x){for(let i=1;i<XS.length;i++){if(x<=XS[i]){const t=(x-XS[i-1])/(XS[i]-XS[i-1]);return YS[i-1]+t*(YS[i]-YS[i-1]);}}return 1;}
+const svg=$('#vle'), P=50, L=330;
+const sx=x=>P+x*L, sy=y=>P+L-y*L-10;
+let g='';
+for(let i=0;i<=10;i++){const v=i/10;g+=`<line class="grid" x1="${sx(v)}" y1="${sy(0)}" x2="${sx(v)}" y2="${sy(1)}"/><line class="grid" x1="${sx(0)}" y1="${sy(v)}" x2="${sx(1)}" y2="${sy(v)}"/>`;}
+for(let i=0;i<=10;i+=2){const v=i/10;g+=`<text x="${sx(v)}" y="${sy(0)+18}" text-anchor="middle">${i*10}</text><text x="${sx(0)-8}" y="${sy(v)+4}" text-anchor="end">${i*10}</text>`;}
+g+=`<line class="axis" x1="${sx(0)}" y1="${sy(0)}" x2="${sx(1)}" y2="${sy(0)}"/><line class="axis" x1="${sx(0)}" y1="${sy(0)}" x2="${sx(0)}" y2="${sy(1)}"/>`;
+g+=`<text x="${sx(.5)}" y="${sy(0)+36}" text-anchor="middle">ethanol in liquid (mol%)</text>`;
+g+=`<text transform="translate(${sx(0)-36},${sy(.5)}) rotate(-90)" text-anchor="middle">ethanol in vapor (mol%)</text>`;
+g+=`<path class="diag" d="M${sx(0)},${sy(0)} L${sx(1)},${sy(1)}"/>`;
+let d='';for(let x=0;x<=1.0001;x+=.005){d+=(d?'L':'M')+sx(x)+','+sy(yOf(x));}
+g+=`<path class="curve" d="${d}"/>`;
+g+=`<line class="wall" x1="${sx(.896)}" y1="${sy(0)}" x2="${sx(.896)}" y2="${sy(1)}"/><text x="${sx(.896)-6}" y="${sy(.08)}" text-anchor="end" style="fill:var(--rec)">azeotrope 89.6</text>`;
+g+=`<text x="${sx(.58)}" y="${sy(.52)}" style="fill:var(--muted)">vapor = liquid</text>`;
+g+=`<line id="gapline" class="gap"/><circle id="vpt" class="pt" r="8"/>`;
+svg.innerHTML=g;
+const sl=$('#xslider');
+function upd(){const x=sl.value/100,y=yOf(x);
+  $('#xval').textContent=fmt(sl.value,1);
+  $('#mx').style.height=(x*100)+'%';$('#my').style.height=(y*100)+'%';
+  $('#mxv').textContent=fmt(x*100,1)+'%';$('#myv').textContent=fmt(y*100,1)+'%';
+  const pt=$('#vpt');pt.setAttribute('cx',sx(x));pt.setAttribute('cy',sy(y));
+  const gl=$('#gapline');gl.setAttribute('x1',sx(x));gl.setAttribute('x2',sx(x));gl.setAttribute('y1',sy(x));gl.setAttribute('y2',sy(y));
+  const v=$('#verdict'),gap=(y-x)*100;
+  if(x<.88){v.className='verdict';v.innerHTML=`The vapor is <strong>${fmt(gap,1)} points richer</strong> in ethanol than the liquid. Boiling is still doing useful work.`;}
+  else if(x<=.905){v.className='verdict stuck';v.innerHTML=`<strong>Stuck.</strong> Vapor and liquid are the same. This is the azeotrope: boiling can no longer separate them.`;}
+  else{v.className='verdict stuck';v.innerHTML=`<strong>You can't get here by boiling.</strong> Starting below 89.6%, ordinary distillation can never cross the wall. This is the region cyclohexane unlocks.`;}
+}
+sl.addEventListener('input',upd);upd();
+
+/* ---------- 3. Ladder ---------- */
+const RUNGS=[
+ {t:62.14,n:'Ethanol + water + cyclohexane',f:[.317,.152,.530],lay:'Splits into two liquid layers',top:true,
+  d:'The lowest boiling point in the column, so this mixture leaves the top of Column 2. It carries the water out with it. In our simulation the top of Column 2 runs at 62.0 °C, right at this temperature.'},
+ {t:64.78,n:'Ethanol + cyclohexane',f:[.438,0,.562],lay:'Stays one liquid',d:'Boils a little higher. Holds no water, so it does not help remove water by itself.'},
+ {t:69.26,n:'Water + cyclohexane',f:[0,.299,.701],lay:'Splits into two liquid layers',d:'Water and cyclohexane do not mix as liquids, which is why the decanter works.'},
+ {t:78.16,n:'Ethanol + water (the azeotrope)',f:[.896,.104,0],lay:'Stays one liquid',d:'The wall from Chapter 2. Without cyclohexane, this is as far as boiling can go.'},
+ {t:100,n:'Pure water',f:[0,1,0],lay:'',d:'Highest boiling point here, so water always heads for the bottom of a column. That is why WATER1 and WATER2 leave at the bottoms of Columns 1 and 3.'}
+];
+const lad=$('#ladder');
+function bar3(f){return `<span class="bar3"><i style="width:${f[0]*100}%;background:var(--eth)"></i><i style="width:${f[1]*100}%;background:var(--water)"></i><i style="width:${f[2]*100}%;background:var(--cyc)"></i></span>`;}
+lad.innerHTML=RUNGS.map((r,i)=>`<button class="rung ${r.top?'top':''}" aria-pressed="${i===0}" data-i="${i}"><span class="t">${fmt(r.t,r.t===100?0:2)} °C</span><span><span class="n">${r.n}</span>${bar3(r.f)}</span></button>`).join('');
+function showRung(i){const r=RUNGS[i];$$('.rung').forEach(b=>b.setAttribute('aria-pressed',b.dataset.i==i));
+  $('#ladder-detail').innerHTML=`<div class="eyebrow">${fmt(r.t,r.t===100?0:2)} °C${r.top?' · lowest = goes to the top':''}</div><h3 style="margin:6px 0 8px">${r.n}</h3>
+  ${r.f[0]+r.f[1]+r.f[2]>0?`<div class="comp"><div class="bar">${['eth','water','cyc'].map((k,j)=>`<i style="width:${r.f[j]*100}%;background:var(--${k})"></i>`).join('')}</div><div class="keys"><span class="e">ethanol ${fmt(r.f[0]*100,1)}%</span><span class="w">water ${fmt(r.f[1]*100,1)}%</span><span class="c">cyclohexane ${fmt(r.f[2]*100,1)}%</span></div></div>`:''}
+  <p style="margin-top:10px">${r.d}</p>${r.lay?`<p class="note" style="margin-top:6px">When cooled to liquid: ${r.lay.toLowerCase()}.</p>`:''}
+  <p class="note" style="margin-top:6px">${r.t===100?'Pure water at 1 atm.':'Mole fractions at 1 atm, calculated with the NRTL-RK model <span class="cite">(Miranda et al. 45)</span>.'}${r.top?' A lab measurement gives 62.4 °C <span class="cite">(Gomis et al. 7)</span>.':''}</p>`;}
+lad.addEventListener('click',e=>{const b=e.target.closest('.rung');if(b)showRung(+b.dataset.i);});
+showRung(0);
+
+/* ---------- 4. Plant tour ---------- */
+const S={
+ 'FEED':{f:100.000,m:3204.2,T:79.78,P:1.013,x:[.5,.5,0],from:'Outside the plant',to:'P-101',plain:'The starting liquid: half ethanol, half water, right at its boiling point.'},
+ 'S2':{f:100.000,m:3204.2,T:79.78,P:1.216,x:[.5,.5,0],from:'P-101',to:'C-101, stage 25',plain:'The same feed after the pump has pushed it to a slightly higher pressure.'},
+ 'S1':{f:59.560,m:2475.6,T:78.19,P:1.013,x:[.8394,.1606,0],from:'C-101 top',to:'COL-MAIN, stage 6',plain:'About 84% ethanol. Column 1 got it as close to the azeotrope as ordinary boiling reasonably can.'},
+ 'WATER1':{f:40.440,m:728.6,T:99.99,P:1.013,x:[.0001,.9999,0],from:'C-101 bottom',to:'Leaves the plant',plain:'Almost pure water. Most of the water in the feed leaves here.'},
+ 'CYCLOHEX':{f:0.0228,m:1.9,T:25.00,P:1.000,x:[0,0,1],from:'Outside the plant',to:'MIX',plain:'A tiny top-up of fresh cyclohexane, about 1.9 kg per hour, to replace what escapes in the product.'},
+ 'SOLVENT':{f:357.663,m:28896.8,T:25.00,P:1.000,x:[.0837,.0027,.9136],from:'MIX',to:'COL-MAIN, stage 1 (top)',plain:'The helper liquid entering at the very top of Column 2. It is mostly recycled cyclohexane.'},
+ 'RICH-SOL':{f:465.697,m:33151.1,T:62.02,P:1.000,x:[.2081,.0763,.7156],from:'COL-MAIN top',to:'DECANTER',plain:'The low-boiling three-part mixture leaving the top of Column 2, carrying the water away from the ethanol.'},
+ 'REC-SOL':{f:357.640,m:28894.9,T:25.00,P:1.000,x:[.0838,.0027,.9136],from:'DECANTER top layer',to:'MIX',plain:'The cyclohexane-rich top layer, sent back to be used again (Loop 1).'},
+ 'TO-REC':{f:108.057,m:4256.3,T:25.00,P:1.000,x:[.6195,.3201,.0604],from:'DECANTER bottom layer',to:'COL-REC, stage 11',plain:'The bottom layer. It holds the water, but it is actually 62% ethanol, so it cannot simply be thrown away.'},
+ 'RCY-FEED':{f:98.495,m:4084.0,T:66.43,P:1.000,x:[.6796,.2541,.0663],from:'COL-REC top',to:'COL-MAIN, stage 6',plain:'The ethanol rescued by Column 3, sent back to Column 2 so none is wasted (Loop 2).'},
+ 'ETHANOL':{f:50.0206,m:2305.2,T:77.93,P:1.000,x:[.9995,.0000444,.000456],from:'COL-MAIN bottom',to:'Leaves the plant (product)',plain:'The product: 99.95% ethanol. It leaves the bottom of Column 2 because the water was carried out the top.'},
+ 'WATER2':{f:9.56221,m:172.3,T:99.62,P:1.000,x:[.0001,.9999,0],from:'COL-REC bottom',to:'Leaves the plant',plain:'The last of the water, almost pure.'}
+};
+const U={
+ 'P-101':{kind:'Pump',name:'P-101',plain:'Pushes the liquid feed into the first column, like a water pump moving liquid along a pipe.',in:['FEED'],out:['S2'],set:[['Outlet pressure','1.216 bar']]},
+ 'C-101':{kind:'Distillation column · Column 1',name:'C-101',plain:'Does the easy part with ordinary boiling. Water leaves the bottom; ethanol-rich liquid (about 84%) leaves the top. It cannot go past the azeotrope.',in:['S2'],out:['S1','WATER1'],set:[['Stages','28'],['Feed stage','25'],['Reflux ratio','2.1'],['Top product rate','59.56 kmol/h'],['Reboiler heat','2,030.2 kW'],['Condenser cooling','2,019.3 kW']]},
+ 'MIX':{kind:'Mixer',name:'MIX',plain:'Joins the recycled cyclohexane with a tiny bit of fresh cyclohexane, so Column 2 always gets the same helper liquid.',in:['REC-SOL','CYCLOHEX'],out:['SOLVENT'],set:[['Job','Combine two streams']]},
+ 'COL-MAIN':{kind:'Azeotropic column · Column 2',name:'COL-MAIN',plain:'The key step. Cyclohexane forms a low-boiling mixture with the water and carries it out the top. Dry ethanol falls to the bottom and leaves as the product.',in:['SOLVENT','S1','RCY-FEED'],out:['RICH-SOL','ETHANOL'],set:[['Stages','22'],['Solvent enters','stage 1'],['S1 and RCY-FEED enter','stage 6'],['Reflux ratio','0.6'],['Phases allowed','vapor + two liquids'],['Reboiler heat','3,777.8 kW'],['Condenser cooling','3,194.9 kW']]},
+ 'DECANTER':{kind:'Settling tank',name:'DECANTER',plain:'Cools the top liquid of Column 2 to 25 °C. It splits into two layers, like oil and vinegar, and each layer is drawn off separately.',in:['RICH-SOL'],out:['REC-SOL','TO-REC'],set:[['Temperature','25 °C'],['Pressure','0.9869 atm'],['Split','76.8% top layer / 23.2% bottom layer'],['Cooling','745.9 kW']]},
+ 'COL-REC':{kind:'Recovery column · Column 3',name:'COL-REC',plain:'Cleans up the decanter’s bottom layer. The last water leaves the bottom; the ethanol goes back to Column 2.',in:['TO-REC'],out:['RCY-FEED','WATER2'],set:[['Stages','15'],['Feed stage','11'],['Reflux ratio','0.5'],['Reboiler heat','1,809.6 kW'],['Condenser cooling','1,646.2 kW']]},
+ 'B1':{kind:'Calculator (not a machine)',name:'B1',plain:'A small rule inside the simulator. It reads how much cyclohexane escapes in the ETHANOL product and sets the fresh CYCLOHEX stream to exactly that amount, so the plant never runs low.',in:['ETHANOL (reads it)'],out:['CYCLOHEX (sets it)'],set:[['Rule','fresh cyclohexane = cyclohexane lost in product']]}
+};
+const PATHS={
+ eth:['FEED','S2','S1','SOLVENT','RICH-SOL','REC-SOL','TO-REC','RCY-FEED','ETHANOL'],
+ water:['FEED','S2','S1','WATER1','RICH-SOL','TO-REC','RCY-FEED','WATER2'],
+ cyc:['CYCLOHEX','SOLVENT','RICH-SOL','REC-SOL','TO-REC','RCY-FEED']
+};
+const MODETXT={
+ all:null,
+ eth:'<strong class="e">Following the ethanol.</strong> It travels FEED → C-101 → S1 → COL-MAIN and leaves the bottom as the product. Some rides up with the cyclohexane, and both recycle loops bring it back, so almost none is lost.',
+ water:'<strong class="w">Following the water.</strong> Most leaves Column 1 as WATER1. The rest is carried up out of COL-MAIN by the cyclohexane, settles into the decanter’s bottom layer, and leaves Column 3 as WATER2.',
+ cyc:'<strong class="c">Following the cyclohexane.</strong> It goes around in circles: mixer → COL-MAIN top → decanter → back to the mixer. A small amount also loops through Column 3. Only 0.0228 kmol/h escapes, in the product.'
+};
+function compHTML(x){const k=[['eth','ethanol'],['water','water'],['cyc','cyclohexane']];
+ return `<div class="comp"><div class="bar">${k.map((kk,j)=>`<i style="width:${x[j]*100}%;background:var(--${kk[0]})"></i>`).join('')}</div><div class="keys">${k.map((kk,j)=>`<span style="color:var(--${kk[0]})">${kk[1]} ${x[j]<.001&&x[j]>0?'<0.1':fmt(x[j]*100,1)}%</span>`).join('')}</div></div>`;}
+const panel=$('#panel'),pfd=$('#pfd');
+let mode='all';
+function intro(){panel.innerHTML=`<div class="kind">How to use the tour</div><h3>Pick anything on the diagram</h3>
+ <p>Each box is a piece of equipment. Each coloured line is a pipe carrying liquid, and the arrow shows which way it flows.</p>
+ <ul><li>Tap a <strong>box</strong> to see its job and settings.</li><li>Tap a <strong>line</strong> to see what is in that pipe.</li><li>Use <strong>Follow the…</strong> to trace one chemical.</li></ul>
+ <div class="plain">The short version: Column 1 removes most of the water. Column 2 uses cyclohexane to remove the rest. The decanter recovers the cyclohexane. Column 3 rescues the ethanol that went along for the ride.</div>`;}
+function clearSel(){$$('#pfd .sel').forEach(e=>e.classList.remove('sel'));}
+function showUnit(id){const u=U[id];clearSel();const el=pfd.querySelector(`[data-u="${id}"]`);if(el)el.classList.add('sel');
+ panel.innerHTML=`<div class="kind">${u.kind}</div><h3>${u.name}</h3><div class="plain">${u.plain}</div>
+ <dl><dt>In</dt><dd>${u.in.join(', ')}</dd><dt>Out</dt><dd>${u.out.join(', ')}</dd>${u.set.map(s=>`<dt>${s[0]}</dt><dd>${s[1]}</dd>`).join('')}</dl>`;}
+function showStream(id){const s=S[id];clearSel();const el=pfd.querySelector(`[data-s="${id}"]`);if(el)el.classList.add('sel');
+ panel.innerHTML=`<div class="kind">Stream (pipe)</div><h3>${id}</h3><div class="plain">${s.plain}</div>${compHTML(s.x)}
+ <dl><dt>From</dt><dd>${s.from}</dd><dt>To</dt><dd>${s.to}</dd><dt>Flow</dt><dd>${fmt(s.f,s.f<1?4:3)} kmol/h</dd><dt>Mass flow</dt><dd>${fmt(s.m,1)} kg/h</dd><dt>Temperature</dt><dd>${fmt(s.T,2)} °C</dd><dt>Pressure</dt><dd>${fmt(s.P,3)} bar</dd></dl>`;}
+function setMode(m){mode=m;$$('.chip[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+ $$('#pfd .st').forEach(g=>g.classList.toggle('dim',m!=='all'&&!PATHS[m].includes(g.dataset.s)));
+ if(m!=='all'){clearSel();panel.innerHTML=`<div class="kind">Tracing one chemical</div><p>${MODETXT[m]}</p><p class="note">Faded lines carry little or none of it. Tap any line to see the exact amount.</p>`;}else intro();}
+$$('.chip[data-mode]').forEach(b=>b.addEventListener('click',()=>{walkStop();setMode(b.dataset.mode);}));
+const at=$('#animtoggle');
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function setAnim(on){pfd.classList.toggle('animate',on);at.setAttribute('aria-pressed',on);}
+setAnim(!reduce);
+at.addEventListener('click',()=>setAnim(at.getAttribute('aria-pressed')!=='true'));
+function act(t){const u=t.closest('[data-u]'),s=t.closest('[data-s]');if(u){walkStop();showUnit(u.dataset.u);}else if(s){walkStop();showStream(s.dataset.s);}}
+pfd.addEventListener('click',e=>act(e.target));
+pfd.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();act(e.target);}});
+/* guided walk */
+const WALK=[['u','P-101'],['u','C-101'],['s','S1'],['u','MIX'],['u','COL-MAIN'],['s','ETHANOL'],['s','RICH-SOL'],['u','DECANTER'],['s','REC-SOL'],['u','COL-REC'],['s','RCY-FEED'],['u','B1']];
+let wi=-1;const wn=$('#walknext'),wp=$('#walkprev'),wc=$('#walkcount');
+function walkShow(){if(mode!=='all'){mode='all';setMode('all');}const [k,id]=WALK[wi];k==='u'?showUnit(id):showStream(id);
+ wc.textContent=`Step ${wi+1} of ${WALK.length}`;wp.disabled=wi<=0;wn.textContent=wi===WALK.length-1?'Finish':'Next';}
+function walkStop(){wi=-1;wc.textContent='';wp.disabled=true;wn.textContent='Start the guided walk';}
+wn.addEventListener('click',()=>{if(wi===WALK.length-1){walkStop();clearSel();intro();return;}wi++;walkShow();});
+wp.addEventListener('click',()=>{if(wi>0){wi--;walkShow();}});
+intro();
+
+/* ---------- 5. Decanter ---------- */
+const ves=$('#vessel'),cb=$('#coolbtn'),th=$('#thermo'),sc=$('#splitcards');
+const before=`<div class="card"><div class="eyebrow">Coming in · RICH-SOL</div><h3>465.7 kmol/h of one mixed liquid</h3>${compHTML(S['RICH-SOL'].x)}<p class="note">Warm from the top of Column 2. All three chemicals are dissolved together.</p></div>
+ <p class="note">Press the button to cool it. Cyclohexane and water dislike each other, and when the mixture cools they stop sharing one liquid.</p>`;
+const after=`<div class="card"><div class="eyebrow" style="color:var(--cyc)">Top layer · REC-SOL · 76.8%</div><h3>357.6 kmol/h, mostly cyclohexane</h3>${compHTML(S['REC-SOL'].x)}<p class="note">Lighter, so it floats. Goes straight back to the mixer to be reused.</p></div>
+ <div class="card"><div class="eyebrow" style="color:var(--water)">Bottom layer · TO-REC · 23.2%</div><h3>108.1 kmol/h, ethanol + water</h3>${compHTML(S['TO-REC'].x)}<p class="note">Called the "watery" layer, but it is 62% ethanol. Column 3 takes the water out and sends the ethanol back.</p></div>
+ <p class="note">Our layers closely match a published design, which reports 92.8% cyclohexane in the top layer and 64.3% ethanol in the bottom layer <span class="cite">(Miranda et al. 47)</span>.</p>`;
+let cool=false;sc.innerHTML=before;
+function tick(from,to){if(reduce){th.textContent=fmt(to,1)+' °C';return;}const t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/1200);th.textContent=fmt(from+(to-from)*k,1)+' °C';if(k<1)requestAnimationFrame(step);};requestAnimationFrame(step);}
+cb.addEventListener('click',()=>{cool=!cool;ves.classList.toggle('cool',cool);cb.textContent=cool?'Warm it back up':'Cool it to 25 °C';tick(cool?62.02:25,cool?25:62.02);sc.innerHTML=cool?after:before;});
+
+/* ---------- 7. Energy bars ---------- */
+const E=[['C-101','Column 1',2030.2,2019.3],['COL-MAIN','Column 2',3777.8,3194.9],['COL-REC','Column 3',1809.6,1646.2],['DECANTER','Settling tank',0,745.9]];
+const mx=3777.8;
+$('#ebars').innerHTML=E.map(e=>`<div class="erow"><div class="nm">${e[0]}<small>${e[1]}</small></div><div class="etrack">
+ ${e[2]?`<div class="ebar h" style="width:${e[2]/mx*78}%"><span>${fmt(e[2],1)} kW</span></div>`:'<div class="note" style="font-size:.78rem">no heater</div>'}
+ <div class="ebar c" style="width:${e[3]/mx*78}%"><span>${fmt(e[3],1)} kW</span></div></div></div>`).join('');
+
+/* ---------- 8. Lightbox ---------- */
+const lb=$('#lightbox'),lbi=$('#lbimg'),lbc=$('#lbcap');let lastFocus=null;
+$('#gal').addEventListener('click',e=>{const b=e.target.closest('button[data-full]');if(!b)return;lastFocus=b;lbi.src=b.dataset.full;lbi.alt=b.querySelector('img').alt;lbc.textContent=b.dataset.cap;lb.hidden=false;$('#lbclose').focus();});
+function lbClose(){lb.hidden=true;if(lastFocus)lastFocus.focus();}
+$('#lbclose').addEventListener('click',lbClose);
+lb.addEventListener('click',e=>{if(e.target===lb)lbClose();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!lb.hidden)lbClose();});
+
+/* ---------- 10. Quiz ---------- */
+const Q=[
+ {q:'Why can’t ordinary distillation take the mixture all the way to 99.95% ethanol?',o:['The column is not tall enough','At about 89.6% ethanol the vapor and liquid have the same makeup, so boiling stops separating them','Ethanol breaks down when it is heated','Water boils before ethanol'],a:1,w:'That point is the azeotrope. More stages or more heat cannot push past it.'},
+ {q:'What does cyclohexane do inside Column 2?',o:['It reacts with water and destroys it','It forms a low-boiling mixture that carries the water out of the top','It turns into ethanol','It cools the column'],a:1,w:'The three-part mixture boils at about 62 °C, the lowest in the column, so it rises and takes the water with it.'},
+ {q:'Where does the 99.95% ethanol product leave the plant?',o:['Top of Column 1','Top of Column 2','Bottom of Column 2','The decanter'],a:2,w:'With the water carried out the top, dry ethanol falls to the bottom of COL-MAIN.'},
+ {q:'Why is the decanter so important?',o:['It heats the liquid','It splits the liquid into two layers so the cyclohexane can be reused','It adds fresh cyclohexane','It pumps the feed'],a:1,w:'The top layer is 91% cyclohexane and goes straight back to the mixer.'},
+ {q:'Which unit uses the most heat?',o:['C-101','COL-MAIN','COL-REC','The decanter'],a:1,w:'COL-MAIN uses 3,777.8 kW, about half of all the reboiler heat.'}
+];
+let score=0;
+$('#quizbox').innerHTML=Q.map((q,i)=>`<div class="q" data-i="${i}"><div class="qt">${i+1}. ${q.q}</div><div class="opts">${q.o.map((o,j)=>`<button class="o" data-j="${j}">${o}</button>`).join('')}</div><div class="why" hidden></div></div>`).join('');
+$('#quizbox').addEventListener('click',e=>{const b=e.target.closest('button.o');if(!b||b.disabled)return;const qd=b.closest('.q'),q=Q[+qd.dataset.i],j=+b.dataset.j;
+ qd.querySelectorAll('button.o').forEach((x,k)=>{x.disabled=true;if(k===q.a)x.classList.add('right');});
+ if(j===q.a){score++;}else b.classList.add('wrong');
+ const w=qd.querySelector('.why');w.hidden=false;w.innerHTML=(j===q.a?'<strong class="e">Correct.</strong> ':'<strong style="color:var(--rec)">Not quite.</strong> ')+q.w;
+ $('#score').textContent=`Score: ${score} / ${Q.length}`;});
+
+/* ---------- Glossary ---------- */
+const G=[['Distillation column','A tall tower that separates liquids by boiling and cooling them many times.'],['Stage','One level inside a column where rising vapor and falling liquid meet. More stages give a sharper separation.'],['Reboiler','The heater at the bottom of a column. It boils liquid, usually with steam.'],['Condenser','The cooler at the top of a column. It turns vapor back into liquid.'],['Reflux ratio','How much of the top liquid is poured back into the column compared with how much is taken out.'],['Azeotrope','A mixture that boils like a single liquid, so boiling cannot separate it any further.'],['Entrainer','A helper liquid added to break an azeotrope. Here it is cyclohexane.'],['Decanter','A settling tank where two liquids that do not mix form layers.'],['Recycle','A stream sent back to an earlier unit to be used again.'],['kmol/h','A way to count molecules per hour. 1 kmol of ethanol weighs about 46 kg; 1 kmol of water about 18 kg.'],['mol%','Out of every 100 molecules, how many are of one kind.'],['Aspen Plus','Process simulation software that calculates what each unit of a plant would do.']];
+$('#gloss').innerHTML=G.map(g=>`<details><summary>${g[0]}</summary><p>${g[1]}</p></details>`).join('');
+
+/* ---------- nav highlight ---------- */
+const links=$$('nav.toc a'),secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+en.target.id));}});},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>s&&io.observe(s));}
+})();
+</script>
+<style>
+/* Genuine photographs from the accompanying project report; embedded so the single HTML works offline. */
+.hero.hero-professional{padding-top:0!important;position:relative;background:var(--paper)!important;min-height:0!important;overflow:visible!important;color:var(--ink)!important}
+.hero.hero-professional>.wrap{position:relative;z-index:1}
+.industrial-opening{position:relative;max-width:1120px;margin:0 auto 40px;padding:0 16px}
+.industrial-opening>img{display:block;width:100%;height:clamp(285px,33vw,455px);object-fit:cover;object-position:center 52%;border-radius:17px;border:1px solid var(--line);filter:none}
+.industrial-opening-overlay{position:absolute;top:0;left:16px;right:16px;height:calc(100% - 31px);padding:clamp(22px,4vw,50px);border-radius:17px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;background:linear-gradient(90deg,rgba(9,25,21,.82) 0%,rgba(9,25,21,.38) 62%,transparent 100%);color:white;pointer-events:none}
+.industrial-opening-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:#bee8d3;margin-bottom:10px}
+.industrial-opening-overlay strong{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4vw,3.3rem);line-height:1.08;max-width:570px;text-wrap:balance}
+.industrial-opening>figcaption{font-size:.75rem;color:var(--muted);line-height:1.4;margin-top:9px}
+.industrial-reference-feature{margin:38px 0 8px;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(250px,.8fr);background:var(--surface);border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow);align-items:stretch}
+.industrial-reference-feature>a{display:block;background:var(--sunk);min-height:330px}
+.industrial-reference-feature img{display:block;width:100%;height:100%;max-height:550px;min-height:330px;object-fit:cover;object-position:center 37%;border:0;border-radius:0}
+.industrial-reference-feature figcaption{padding:clamp(20px,3vw,38px);display:flex;flex-direction:column;justify-content:center;gap:13px;margin:0;font-size:1rem;color:var(--muted);line-height:1.6}
+.industrial-reference-feature figcaption strong{font:800 clamp(1.4rem,2.5vw,2.1rem)/1.13 var(--display);color:var(--ink)}
+.industrial-reference-feature small{font-size:.79rem;line-height:1.45}
+@media(max-width:760px){.industrial-opening{margin-bottom:22px}.industrial-opening>img{height:300px}.industrial-opening-overlay{padding:24px}.industrial-reference-feature{grid-template-columns:1fr}.industrial-reference-feature img,.industrial-reference-feature>a{min-height:0;height:330px}.industrial-reference-feature figcaption{padding:22px}}
+</style></head></html>
